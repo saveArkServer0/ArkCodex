@@ -8,6 +8,14 @@ import a2s
 import time
 
 
+
+def ConsoleLog(m):
+    print(m)
+
+
+
+
+
 def terminate_process(proc, timeout=15):
     if proc is None:
         return
@@ -27,29 +35,36 @@ def terminate_process(proc, timeout=15):
 
 HOST = "127.0.0.1"
 
-def checkStatusQuery(mainM):
-
+def checkStatusQuery(mainM: ArkMap):
 
     address = (HOST, mainM.queryPort)
-
+    
+    ConsoleLog(f"- address: {address}")
     try:
+        print("checkin a2s...")
         info = a2s.info(address)
+        print("done")
 
-        expected_name = f"The Final Ascension - {mainM.displayName}"
-
+        expected_name = f"The Final Ascension - {mainM.displayName} - (v361.7)"
+        ConsoleLog(f"- expected: {expected_name}, got: {info.server_name}")
         if info.server_name != expected_name:
-            print(f"Wrong server answered {mainM.queryPort}: "f"{info.server_name}")
+            ConsoleLog(f"- Wrong server answered {mainM.queryPort}: "f"- {info.server_name}")
             return False
-
+        ConsoleLog("worked!")
+        ConsoleLog("iterating maps...")
         for m in allMaps:
             if m.queryPort == mainM.queryPort:
                 m.playerCount = info.player_count
                 m.lastTimeRunning = time.monotonic()
+                ConsoleLog("found correct")
+                ConsoleLog(f"- expected map: {mainM.displayName}, got: {m.displayName}")
+                ConsoleLog(f"- playerCount: {info.player_count}\n")
 
         return True
 
     except Exception as e:
         time.sleep(2)
+        ConsoleLog(f"failed in checkStatusQuery : {e}")
         return False
 
 
@@ -125,10 +140,13 @@ def startArkServer(m):
 
             if proc.poll() is not None:
                 raise RuntimeError(f"{m.displayName} exited during startup " f"with code {proc.returncode}")
-            
+
+            ConsoleLog(f"checking Query at {round(time.monotonic() - start_time)}")
             if checkStatusQuery(m):
+                ConsoleLog("-> success")
                 m.process = proc
                 m.pid = proc.pid
+                ConsoleLog(f"setting status from {m.status} to {ArkMap.RUNNING}")
                 m.status = ArkMap.RUNNING
                 return
 

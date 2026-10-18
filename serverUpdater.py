@@ -15,6 +15,16 @@ from comtypes.client import CreateObject
 import time
 from datetime import datetime
 
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+KNOWN_IDS_FILE = BASE_DIR / "knownIDs.txt"
+
+
+
+
 class IProgressDialog(comtypes.IUnknown):
     _iid_ = GUID("{EBBC7C04-315E-11D2-B62F-006097DF5BD4}")
 
@@ -222,7 +232,7 @@ def runCMD():
 
             command_id, command_text = cmdString.split("|")[0], cmdString.split("|")[1]
 
-            with open("knownIDs.txt", "r") as file:
+            with open(KNOWN_IDS_FILE, "r") as file:
                 known_ids = {line.strip() for line in file}
 
             if command_id in known_ids:
@@ -245,14 +255,14 @@ def runCMD():
                 raise RuntimeError("Failed to send command completion to GitHub")
 
 
-            with open("knownIDs.txt", "a") as file:
+            with open(KNOWN_IDS_FILE, "a") as file:
                 file.write(f"{command_id}\n")
 
             
 
         except Exception as e:
             print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Command failed: {cmdString!r}: {e}")
-            gia.writeGist(f"{cmdString}|Failed: for error check log file", file="cmdFile1.txt", log=False)
+            gia.writeGist(f"{('|'.join(cmdString.split('|')[:2]))}|Failed: for error check log file", file="cmdFile1.txt", log=False)
             
         time.sleep(5)
 
